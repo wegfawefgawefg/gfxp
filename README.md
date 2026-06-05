@@ -72,6 +72,13 @@ gfxp::Vec2 vel{gfxp::Fixed::from_decimal("0.25").value(), gfxp::Fixed::zero()};
 pos += vel;
 ```
 
+Scale conversion is explicit:
+
+```cpp
+gfxp::Fixed8 packed = gfxp::fixed_cast<gfxp::Fixed8>(pos.x);
+gfxp::Vec2_8 packed_pos = gfxp::vec2_cast<gfxp::Vec2_8>(pos);
+```
+
 ## Build
 
 ```sh

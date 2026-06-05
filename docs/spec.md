@@ -83,6 +83,46 @@ actual_value = raw / 4096
 Multiplication and division use signed 64-bit intermediates. Callers that need
 larger worlds should audit raw range before using this type.
 
+## Conversion
+
+Converting between fixed scales is explicit:
+
+```cpp
+gfxp::Fixed12 value = gfxp::Fixed12::from_decimal("1.5").value();
+gfxp::Fixed8 compact = gfxp::fixed_cast<gfxp::Fixed8>(value);
+```
+
+Named rounding is available when reducing precision:
+
+```cpp
+gfxp::fixed_cast<gfxp::Fixed8>(value, gfxp::Rounding::TowardZero);
+gfxp::fixed_cast<gfxp::Fixed8>(value, gfxp::Rounding::Nearest);
+```
+
+Checked variants return `std::nullopt` on overflow.
+
+## Vector Helpers
+
+`BasicVec2<FixedT>` provides small deterministic vector helpers:
+
+```cpp
+gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
+gfxp::Vec2_8 compact = gfxp::vec2_cast<gfxp::Vec2_8>(pos);
+```
+
+Available aliases:
+
+```cpp
+gfxp::Vec2;     // BasicVec2<Fixed>
+gfxp::Vec2_8;   // BasicVec2<Fixed8>
+gfxp::Vec2_10;  // BasicVec2<Fixed10>
+gfxp::Vec2_12;  // BasicVec2<Fixed12>
+gfxp::Vec2_16;  // BasicVec2<Fixed16>
+```
+
+Helpers include `dot`, `length_sq`, `manhattan_length`, component `min`, `max`,
+`clamp`, and `abs`. There is no square root or normalize helper yet.
+
 ## Rounding
 
 Rounding is explicit:

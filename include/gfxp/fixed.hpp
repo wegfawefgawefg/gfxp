@@ -96,12 +96,20 @@ template <typename Raw, int FracBits> struct BasicFixed {
         return BasicFixed{static_cast<Raw>(value * static_cast<int32_t>(scale))};
     }
 
+    [[nodiscard]] static constexpr BasicFixed from_pixels(int32_t value) {
+        return from_int(value);
+    }
+
     [[nodiscard]] static constexpr std::optional<BasicFixed> checked_from_int(int32_t value) {
         const wide_type raw_value = static_cast<wide_type>(value) * static_cast<wide_type>(scale);
         const std::optional<Raw> checked = detail::checked_raw<Raw>(raw_value);
         if (!checked)
             return std::nullopt;
         return BasicFixed{*checked};
+    }
+
+    [[nodiscard]] static constexpr std::optional<BasicFixed> checked_from_pixels(int32_t value) {
+        return checked_from_int(value);
     }
 
     [[nodiscard]] static constexpr std::optional<BasicFixed>
@@ -209,6 +217,10 @@ template <typename Raw, int FracBits> struct BasicFixed {
         return static_cast<int32_t>(quotient);
     }
 
+    [[nodiscard]] constexpr int32_t to_pixels_floor() const {
+        return floor_int();
+    }
+
     [[nodiscard]] constexpr int32_t ceil_int() const {
         const Raw quotient = static_cast<Raw>(raw / scale);
         const Raw remainder = static_cast<Raw>(raw % scale);
@@ -217,9 +229,21 @@ template <typename Raw, int FracBits> struct BasicFixed {
         return static_cast<int32_t>(quotient);
     }
 
+    [[nodiscard]] constexpr int32_t to_pixels_ceil() const {
+        return ceil_int();
+    }
+
     [[nodiscard]] constexpr int32_t round_int() const {
         const std::optional<int64_t> rounded = detail::div_round(raw, scale, Rounding::Nearest);
         return rounded ? static_cast<int32_t>(*rounded) : 0;
+    }
+
+    [[nodiscard]] constexpr int32_t to_pixels_round() const {
+        return round_int();
+    }
+
+    [[nodiscard]] constexpr int32_t to_pixels_trunc() const {
+        return trunc_int();
     }
 
     [[nodiscard]] constexpr BasicFixed abs() const {
@@ -266,6 +290,35 @@ using Fixed10 = BasicFixed<int32_t, 10>;
 using Fixed12 = BasicFixed<int32_t, 12>;
 using Fixed16 = BasicFixed<int32_t, 16>;
 using Fixed = Fixed12;
+
+template <typename ToFixed, typename FromRaw, int FromFracBits>
+[[nodiscard]] constexpr std::optional<ToFixed>
+checked_fixed_cast(BasicFixed<FromRaw, FromFracBits> value, Rounding rounding = Rounding::Nearest) {
+    const int shift = ToFixed::frac_bits - FromFracBits;
+    int64_t raw = value.raw_value();
+    if (shift > 0) {
+        raw <<= shift;
+    } else if (shift < 0) {
+        const int64_t denominator = int64_t{1} << -shift;
+        const std::optional<int64_t> rounded = detail::div_round(raw, denominator, rounding);
+        if (!rounded)
+            return std::nullopt;
+        raw = *rounded;
+    }
+
+    const std::optional<typename ToFixed::raw_type> checked =
+        detail::checked_raw<typename ToFixed::raw_type>(raw);
+    if (!checked)
+        return std::nullopt;
+    return ToFixed::from_raw(*checked);
+}
+
+template <typename ToFixed, typename FromRaw, int FromFracBits>
+[[nodiscard]] constexpr ToFixed fixed_cast(BasicFixed<FromRaw, FromFracBits> value,
+                                           Rounding rounding = Rounding::Nearest) {
+    const std::optional<ToFixed> converted = checked_fixed_cast<ToFixed>(value, rounding);
+    return converted.value_or(ToFixed::zero());
+}
 
 template <typename Raw, int FracBits>
 [[nodiscard]] constexpr BasicFixed<Raw, FracBits> operator+(BasicFixed<Raw, FracBits> lhs,

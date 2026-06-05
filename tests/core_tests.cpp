@@ -84,6 +84,48 @@ void test_hash_and_raw_roundtrip() {
     check(std::hash<gfxp::Fixed>{}(value) == std::hash<int32_t>{}(raw), "hash raw");
 }
 
+void test_fixed_casts_and_pixel_helpers() {
+    const gfxp::Fixed12 one_and_half = gfxp::Fixed12::from_decimal("1.5").value();
+    const gfxp::Fixed8 down = gfxp::fixed_cast<gfxp::Fixed8>(one_and_half);
+    const gfxp::Fixed16 up = gfxp::fixed_cast<gfxp::Fixed16>(one_and_half);
+
+    check(down.raw_value() == 384, "fixed12 to fixed8");
+    check(up.raw_value() == 98304, "fixed12 to fixed16");
+    check(one_and_half.to_pixels_floor() == 1, "pixels floor");
+    check(one_and_half.to_pixels_ceil() == 2, "pixels ceil");
+    check(one_and_half.to_pixels_round() == 2, "pixels round");
+    check(one_and_half.to_pixels_trunc() == 1, "pixels trunc");
+
+    const gfxp::Fixed12 tiny = gfxp::Fixed12::from_raw(7);
+    check(gfxp::fixed_cast<gfxp::Fixed8>(tiny, gfxp::Rounding::TowardZero).raw_value() == 0,
+          "fixed cast toward zero");
+    check(gfxp::fixed_cast<gfxp::Fixed8>(tiny, gfxp::Rounding::Nearest).raw_value() == 0,
+          "fixed cast nearest down");
+    check(gfxp::fixed_cast<gfxp::Fixed8>(gfxp::Fixed12::from_raw(8), gfxp::Rounding::Nearest)
+                  .raw_value() == 1,
+          "fixed cast nearest up");
+}
+
+void test_vec2_helpers() {
+    const gfxp::Vec2 a = gfxp::Vec2::from_pixels(3, -4);
+    const gfxp::Vec2 b{
+        gfxp::Fixed::from_decimal("0.5").value(),
+        gfxp::Fixed::from_decimal("2.0").value(),
+    };
+
+    check((a + b).x.raw_value() == 14336, "vec add x");
+    check((a + b).y.raw_value() == -8192, "vec add y");
+    check(gfxp::dot(a, a).raw_value() == gfxp::Fixed::from_int(25).raw_value(), "vec dot");
+    check(gfxp::length_sq(a).raw_value() == gfxp::Fixed::from_int(25).raw_value(), "vec length sq");
+    check(gfxp::manhattan_length(a).raw_value() == gfxp::Fixed::from_int(7).raw_value(),
+          "vec manhattan");
+    check(gfxp::abs(a) == gfxp::Vec2::from_pixels(3, 4), "vec abs");
+
+    const gfxp::Vec2_8 a8 = gfxp::vec2_cast<gfxp::Vec2_8>(a);
+    check(a8.x.raw_value() == 768, "vec cast x");
+    check(a8.y.raw_value() == -1024, "vec cast y");
+}
+
 } // namespace
 
 int main() {
@@ -92,6 +134,8 @@ int main() {
     test_rounding();
     test_vec2_integration();
     test_hash_and_raw_roundtrip();
+    test_fixed_casts_and_pixel_helpers();
+    test_vec2_helpers();
 
     if (g_failures != 0) {
         std::cerr << g_failures << " test failure(s)\n";
