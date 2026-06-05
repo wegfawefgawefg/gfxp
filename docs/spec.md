@@ -46,21 +46,30 @@ Host games decide which gameplay fields need fixed-point semantics.
 
 ## Scale
 
-The initial scale is:
+The default scale is:
 
 ```text
-1 pixel = 1024 subpixels
+1 pixel = 4096 subpixels
 ```
 
-That gives about `0.0009765625` pixel precision. It is enough for normal
+That gives about `0.000244140625` pixel precision. It is enough for normal
 hand-authored gameplay constants in Splonks, where one to three decimal places
 dominate.
 
 The scale is fixed at compile time:
 
 ```cpp
-gfxp::Fixed::frac_bits == 10
-gfxp::Fixed::scale == 1024
+gfxp::Fixed::frac_bits == 12
+gfxp::Fixed::scale == 4096
+```
+
+Scale-specific aliases are available for tests and benchmarks:
+
+```cpp
+gfxp::Fixed8;   // 1/256 px
+gfxp::Fixed10;  // 1/1024 px
+gfxp::Fixed12;  // 1/4096 px, default
+gfxp::Fixed16;  // 1/65536 px
 ```
 
 ## Storage
@@ -68,7 +77,7 @@ gfxp::Fixed::scale == 1024
 `Fixed` stores one signed 32-bit raw integer:
 
 ```cpp
-actual_value = raw / 1024
+actual_value = raw / 4096
 ```
 
 Multiplication and division use signed 64-bit intermediates. Callers that need
@@ -94,9 +103,9 @@ through `float` or `double`.
 Examples:
 
 ```text
-"1.5"   -> 1536 raw
-"0.125" -> 128 raw
-"-0.25" -> -256 raw
+"1.5"   -> 6144 raw
+"0.125" -> 512 raw
+"-0.25" -> -1024 raw
 ```
 
 Invalid input returns `std::nullopt`.

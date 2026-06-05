@@ -20,30 +20,30 @@ void test_basic_arithmetic() {
     const gfxp::Fixed half = gfxp::Fixed::from_decimal("0.5").value();
     const gfxp::Fixed quarter = gfxp::Fixed::from_decimal("0.25").value();
 
-    check(one.raw_value() == 1024, "one raw");
-    check(half.raw_value() == 512, "half raw");
-    check((one + half).raw_value() == 1536, "add");
-    check((one - half).raw_value() == 512, "sub");
+    check(one.raw_value() == 4096, "one raw");
+    check(half.raw_value() == 2048, "half raw");
+    check((one + half).raw_value() == 6144, "add");
+    check((one - half).raw_value() == 2048, "sub");
     check((half * half).raw_value() == quarter.raw_value(), "mul");
     check((half / gfxp::Fixed::from_int(2)).raw_value() == quarter.raw_value(), "div");
 }
 
 void test_decimal_parsing() {
     check(gfxp::Fixed::from_decimal("0").value().raw_value() == 0, "parse zero");
-    check(gfxp::Fixed::from_decimal("1.5").value().raw_value() == 1536, "parse 1.5");
-    check(gfxp::Fixed::from_decimal("-0.25").value().raw_value() == -256, "parse -0.25");
-    check(gfxp::Fixed::from_decimal(".125").value().raw_value() == 128, "parse .125");
-    check(gfxp::Fixed::from_decimal("0.001").value().raw_value() == 1, "parse 0.001");
-    check(gfxp::Fixed::from_decimal("0.0004").value().raw_value() == 0, "parse 0.0004");
-    check(gfxp::Fixed::from_decimal("0.0005").value().raw_value() == 1, "parse 0.0005");
+    check(gfxp::Fixed::from_decimal("1.5").value().raw_value() == 6144, "parse 1.5");
+    check(gfxp::Fixed::from_decimal("-0.25").value().raw_value() == -1024, "parse -0.25");
+    check(gfxp::Fixed::from_decimal(".125").value().raw_value() == 512, "parse .125");
+    check(gfxp::Fixed::from_decimal("0.001").value().raw_value() == 4, "parse 0.001");
+    check(gfxp::Fixed::from_decimal("0.0004").value().raw_value() == 2, "parse 0.0004");
+    check(gfxp::Fixed::from_decimal("0.0005").value().raw_value() == 2, "parse 0.0005");
     check(!gfxp::Fixed::from_decimal("").has_value(), "reject empty");
     check(!gfxp::Fixed::from_decimal("abc").has_value(), "reject alpha");
     check(!gfxp::Fixed::from_decimal("1.2.3").has_value(), "reject double dot");
 }
 
 void test_rounding() {
-    const gfxp::Fixed plus = gfxp::Fixed::from_raw(1536);
-    const gfxp::Fixed minus = gfxp::Fixed::from_raw(-1536);
+    const gfxp::Fixed plus = gfxp::Fixed::from_raw(6144);
+    const gfxp::Fixed minus = gfxp::Fixed::from_raw(-6144);
     const gfxp::Fixed tiny_negative = gfxp::Fixed::from_raw(-1);
 
     check(plus.trunc_int() == 1, "plus trunc");
@@ -72,8 +72,8 @@ void test_vec2_integration() {
         pos += vel;
     }
 
-    check(pos.x.raw_value() == 766740, "integrated x raw");
-    check(pos.y.raw_value() == 893480, "integrated y raw");
+    check(pos.x.raw_value() == 3066960, "integrated x raw");
+    check(pos.y.raw_value() == 3573920, "integrated y raw");
 }
 
 void test_hash_and_raw_roundtrip() {

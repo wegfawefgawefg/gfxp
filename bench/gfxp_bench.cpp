@@ -33,10 +33,13 @@ struct DoubleEnt {
     double ay;
 };
 
-struct FixedEnt {
-    gfxp::Vec2 pos;
-    gfxp::Vec2 vel;
-    gfxp::Vec2 acc;
+template <typename FixedT> struct FixedEnt {
+    FixedT px;
+    FixedT py;
+    FixedT vx;
+    FixedT vy;
+    FixedT ax;
+    FixedT ay;
 };
 
 void print_result(std::string_view name, double seconds, std::uint64_t checksum, int entities,
@@ -54,6 +57,48 @@ void print_ops_result(std::string_view name, double seconds, std::uint64_t check
               << "\n";
 }
 
+template <typename FixedT>
+std::pair<double, std::uint64_t> run_fixed_movement_bench(int entities, int ticks) {
+    std::vector<FixedEnt<FixedT>> fixeds;
+    fixeds.reserve(static_cast<std::size_t>(entities));
+
+    for (int i = 0; i < entities; ++i) {
+        fixeds.push_back(FixedEnt<FixedT>{
+            FixedT::from_int(i % 251),
+            FixedT::from_ratio(i % 251, 2).value(),
+            FixedT::from_decimal("0.25").value(),
+            FixedT::from_decimal("-0.125").value(),
+            FixedT::from_decimal("0.001").value(),
+            FixedT::from_decimal("0.002").value(),
+        });
+    }
+
+    std::uint64_t checksum = 0;
+    const FixedT damping = FixedT::from_decimal("0.999").value();
+    const FixedT low = FixedT::zero();
+    const FixedT high = FixedT::from_int(2048);
+    const double seconds = time_seconds([&]() {
+        for (int tick = 0; tick < ticks; ++tick) {
+            for (FixedEnt<FixedT>& ent : fixeds) {
+                ent.vx += ent.ax;
+                ent.vy += ent.ay;
+                ent.vx *= damping;
+                ent.vy *= damping;
+                ent.px += ent.vx;
+                ent.py += ent.vy;
+                if (ent.px < low || ent.px > high)
+                    ent.vx = -ent.vx;
+                if (ent.py < low || ent.py > high)
+                    ent.vy = -ent.vy;
+            }
+        }
+        for (const FixedEnt<FixedT>& ent : fixeds)
+            checksum += static_cast<std::uint64_t>(ent.px.raw_value());
+    });
+
+    return {seconds, checksum};
+}
+
 } // namespace
 
 int main() {
@@ -62,22 +107,13 @@ int main() {
 
     std::vector<FloatEnt> floats;
     std::vector<DoubleEnt> doubles;
-    std::vector<FixedEnt> fixeds;
     floats.reserve(entities);
     doubles.reserve(entities);
-    fixeds.reserve(entities);
 
     for (int i = 0; i < entities; ++i) {
         const float base = static_cast<float>(i % 251);
         floats.push_back(FloatEnt{base, base * 0.5F, 0.25F, -0.125F, 0.001F, 0.002F});
         doubles.push_back(DoubleEnt{base, base * 0.5, 0.25, -0.125, 0.001, 0.002});
-        fixeds.push_back(FixedEnt{
-            gfxp::Vec2{gfxp::Fixed::from_int(i % 251), gfxp::Fixed::from_ratio(i % 251, 2).value()},
-            gfxp::Vec2{gfxp::Fixed::from_decimal("0.25").value(),
-                       gfxp::Fixed::from_decimal("-0.125").value()},
-            gfxp::Vec2{gfxp::Fixed::from_decimal("0.001").value(),
-                       gfxp::Fixed::from_decimal("0.002").value()},
-        });
     }
 
     std::uint64_t float_checksum = 0;
@@ -120,31 +156,23 @@ int main() {
             double_checksum += static_cast<std::uint64_t>(ent.px * 1000.0);
     });
 
-    std::uint64_t fixed_checksum = 0;
-    const gfxp::Fixed damping = gfxp::Fixed::from_decimal("0.999").value();
-    const gfxp::Fixed low = gfxp::Fixed::zero();
-    const gfxp::Fixed high = gfxp::Fixed::from_int(2048);
-    const double fixed_seconds = time_seconds([&]() {
-        for (int tick = 0; tick < ticks; ++tick) {
-            for (FixedEnt& ent : fixeds) {
-                ent.vel += ent.acc;
-                ent.vel *= damping;
-                ent.pos += ent.vel;
-                if (ent.pos.x < low || ent.pos.x > high)
-                    ent.vel.x = -ent.vel.x;
-                if (ent.pos.y < low || ent.pos.y > high)
-                    ent.vel.y = -ent.vel.y;
-            }
-        }
-        for (const FixedEnt& ent : fixeds)
-            fixed_checksum += static_cast<std::uint64_t>(ent.pos.x.raw_value());
-    });
+    const auto [fixed8_seconds, fixed8_checksum] =
+        run_fixed_movement_bench<gfxp::Fixed8>(entities, ticks);
+    const auto [fixed10_seconds, fixed10_checksum] =
+        run_fixed_movement_bench<gfxp::Fixed10>(entities, ticks);
+    const auto [fixed12_seconds, fixed12_checksum] =
+        run_fixed_movement_bench<gfxp::Fixed12>(entities, ticks);
+    const auto [fixed16_seconds, fixed16_checksum] =
+        run_fixed_movement_bench<gfxp::Fixed16>(entities, ticks);
 
     std::cout << "entities: " << entities << ", ticks: " << ticks << "\n";
-    std::cout << "fixed scale: " << gfxp::Fixed::scale << " subpixels/pixel\n";
+    std::cout << "default fixed scale: " << gfxp::Fixed::scale << " subpixels/pixel\n";
     print_result("float", float_seconds, float_checksum, entities, ticks);
     print_result("double", double_seconds, double_checksum, entities, ticks);
-    print_result("fixed", fixed_seconds, fixed_checksum, entities, ticks);
+    print_result("fixed8", fixed8_seconds, fixed8_checksum, entities, ticks);
+    print_result("fixed10", fixed10_seconds, fixed10_checksum, entities, ticks);
+    print_result("fixed12", fixed12_seconds, fixed12_checksum, entities, ticks);
+    print_result("fixed16", fixed16_seconds, fixed16_checksum, entities, ticks);
 
     constexpr int primitive_count = 32768;
     constexpr int primitive_passes = 2048;

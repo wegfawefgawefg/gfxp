@@ -9,7 +9,7 @@ simulation.
 
 The first target is simple 2D game physics that needs to behave the same on
 different machines. `gfxp` stores values as signed integer subpixels. The default
-scale is 1024 subpixels per pixel.
+scale is 4096 subpixels per pixel.
 
 `gfxp` is not a broad math framework. It does not own vectors beyond the small
 helpers needed for game-space positions and velocities, and it does not replace
@@ -35,6 +35,21 @@ target_link_libraries(my_game PRIVATE gfxp::gfxp)
 ```
 
 Because the core is header-only, a game can also copy `include/gfxp` directly.
+
+The default fixed type is:
+
+```cpp
+using gfxp::Fixed; // int32_t raw, 12 fractional bits
+```
+
+Scale-specific aliases are available for experiments:
+
+```cpp
+gfxp::Fixed8;
+gfxp::Fixed10;
+gfxp::Fixed12;
+gfxp::Fixed16;
+```
 
 ## Basic Use
 
