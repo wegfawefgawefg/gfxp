@@ -1,0 +1,103 @@
+#include <cstdlib>
+#include <functional>
+#include <gfxp/gfxp.hpp>
+#include <iostream>
+#include <string>
+
+namespace {
+
+int g_failures = 0;
+
+void check(bool condition, const std::string& message) {
+    if (condition)
+        return;
+    ++g_failures;
+    std::cerr << "FAIL: " << message << "\n";
+}
+
+void test_basic_arithmetic() {
+    const gfxp::Fixed one = gfxp::Fixed::from_int(1);
+    const gfxp::Fixed half = gfxp::Fixed::from_decimal("0.5").value();
+    const gfxp::Fixed quarter = gfxp::Fixed::from_decimal("0.25").value();
+
+    check(one.raw_value() == 1024, "one raw");
+    check(half.raw_value() == 512, "half raw");
+    check((one + half).raw_value() == 1536, "add");
+    check((one - half).raw_value() == 512, "sub");
+    check((half * half).raw_value() == quarter.raw_value(), "mul");
+    check((half / gfxp::Fixed::from_int(2)).raw_value() == quarter.raw_value(), "div");
+}
+
+void test_decimal_parsing() {
+    check(gfxp::Fixed::from_decimal("0").value().raw_value() == 0, "parse zero");
+    check(gfxp::Fixed::from_decimal("1.5").value().raw_value() == 1536, "parse 1.5");
+    check(gfxp::Fixed::from_decimal("-0.25").value().raw_value() == -256, "parse -0.25");
+    check(gfxp::Fixed::from_decimal(".125").value().raw_value() == 128, "parse .125");
+    check(gfxp::Fixed::from_decimal("0.001").value().raw_value() == 1, "parse 0.001");
+    check(gfxp::Fixed::from_decimal("0.0004").value().raw_value() == 0, "parse 0.0004");
+    check(gfxp::Fixed::from_decimal("0.0005").value().raw_value() == 1, "parse 0.0005");
+    check(!gfxp::Fixed::from_decimal("").has_value(), "reject empty");
+    check(!gfxp::Fixed::from_decimal("abc").has_value(), "reject alpha");
+    check(!gfxp::Fixed::from_decimal("1.2.3").has_value(), "reject double dot");
+}
+
+void test_rounding() {
+    const gfxp::Fixed plus = gfxp::Fixed::from_raw(1536);
+    const gfxp::Fixed minus = gfxp::Fixed::from_raw(-1536);
+    const gfxp::Fixed tiny_negative = gfxp::Fixed::from_raw(-1);
+
+    check(plus.trunc_int() == 1, "plus trunc");
+    check(plus.floor_int() == 1, "plus floor");
+    check(plus.ceil_int() == 2, "plus ceil");
+    check(plus.round_int() == 2, "plus round");
+
+    check(minus.trunc_int() == -1, "minus trunc");
+    check(minus.floor_int() == -2, "minus floor");
+    check(minus.ceil_int() == -1, "minus ceil");
+    check(minus.round_int() == -2, "minus round");
+
+    check(tiny_negative.floor_int() == -1, "tiny negative floor");
+    check(tiny_negative.ceil_int() == 0, "tiny negative ceil");
+}
+
+void test_vec2_integration() {
+    gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
+    gfxp::Vec2 vel{gfxp::Fixed::from_decimal("0.25").value(),
+                   gfxp::Fixed::from_decimal("-0.125").value()};
+    const gfxp::Vec2 acc{gfxp::Fixed::from_decimal("0.001").value(),
+                         gfxp::Fixed::from_decimal("0.002").value()};
+
+    for (int i = 0; i < 1000; ++i) {
+        vel += acc;
+        pos += vel;
+    }
+
+    check(pos.x.raw_value() == 766740, "integrated x raw");
+    check(pos.y.raw_value() == 893480, "integrated y raw");
+}
+
+void test_hash_and_raw_roundtrip() {
+    const gfxp::Fixed value = gfxp::Fixed::from_decimal("12.375").value();
+    const int32_t raw = value.raw_value();
+    const gfxp::Fixed restored = gfxp::Fixed::from_raw(raw);
+    check(value == restored, "raw roundtrip");
+    check(std::hash<gfxp::Fixed>{}(value) == std::hash<int32_t>{}(raw), "hash raw");
+}
+
+} // namespace
+
+int main() {
+    test_basic_arithmetic();
+    test_decimal_parsing();
+    test_rounding();
+    test_vec2_integration();
+    test_hash_and_raw_roundtrip();
+
+    if (g_failures != 0) {
+        std::cerr << g_failures << " test failure(s)\n";
+        return EXIT_FAILURE;
+    }
+
+    std::cout << "gfxp core tests passed\n";
+    return EXIT_SUCCESS;
+}
