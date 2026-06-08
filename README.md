@@ -11,9 +11,9 @@ The first target is simple 2D game physics that needs to behave the same on
 different machines. `gfxp` stores values as signed integer subpixels. The default
 scale is 4096 subpixels per pixel.
 
-`gfxp` is not a broad math framework. It does not own vectors beyond the small
-helpers needed for game-space positions and velocities, and it does not replace
-rendering, camera, audio, UI, or visual interpolation floats.
+`gfxp` is not a broad math framework. It owns only the small vector and AABB
+helpers needed for game-space positions, velocities, and collision bounds, and
+it does not replace rendering, camera, audio, UI, or visual interpolation floats.
 
 ## Targets
 
@@ -70,6 +70,13 @@ gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
 gfxp::Vec2 vel{gfxp::Fixed::from_decimal("0.25").value(), gfxp::Fixed::zero()};
 
 pos += vel;
+```
+
+AABB helpers use the same fixed vector types:
+
+```cpp
+gfxp::Aabb body = gfxp::Aabb::from_pos_size(pos, gfxp::Vec2::from_pixels(8, 8));
+bool touching = gfxp::aabbs_intersect(body, other);
 ```
 
 Scale conversion is explicit:

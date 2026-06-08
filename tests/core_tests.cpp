@@ -126,6 +126,25 @@ void test_vec2_helpers() {
     check(a8.y.raw_value() == -1024, "vec cast y");
 }
 
+void test_aabb_helpers() {
+    const gfxp::Aabb a = gfxp::Aabb::from_corners(gfxp::Vec2::from_pixels(0, 0),
+                                                  gfxp::Vec2::from_pixels(8, 8));
+    const gfxp::Aabb b = gfxp::Aabb::from_pos_size(gfxp::Vec2::from_pixels(7, 4),
+                                                   gfxp::Vec2::from_pixels(4, 4));
+    const gfxp::Aabb c = gfxp::translate(a, gfxp::Vec2::from_pixels(16, 0));
+
+    check(gfxp::aabbs_intersect(a, b), "aabb intersect");
+    check(!gfxp::aabbs_intersect(a, c), "aabb separated");
+    check(a.size() == gfxp::Vec2::from_pixels(8, 8), "aabb size");
+    check(a.center() == gfxp::Vec2::from_pixels(4, 4), "aabb center");
+    check(gfxp::min_displacement(a, c) == gfxp::Vec2::from_pixels(8, 0),
+          "aabb min displacement");
+
+    const gfxp::Aabb_8 packed = gfxp::aabb_cast<gfxp::Aabb_8>(a);
+    check(packed.br.x.raw_value() == 2048, "aabb cast br x");
+    check(packed.br.y.raw_value() == 2048, "aabb cast br y");
+}
+
 } // namespace
 
 int main() {
@@ -136,6 +155,7 @@ int main() {
     test_hash_and_raw_roundtrip();
     test_fixed_casts_and_pixel_helpers();
     test_vec2_helpers();
+    test_aabb_helpers();
 
     if (g_failures != 0) {
         std::cerr << g_failures << " test failure(s)\n";

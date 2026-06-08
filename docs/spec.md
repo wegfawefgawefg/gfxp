@@ -23,6 +23,7 @@ The library should stay boring:
 
 - Fixed-point scalar values.
 - Small 2D vector helpers built from fixed-point values.
+- Small 2D AABB helpers built from fixed-point vectors.
 - Deterministic decimal parsing for authored constants.
 - Explicit rounding to integer pixels.
 - Stable raw-value access for serialization and hashing.
@@ -122,6 +123,33 @@ gfxp::Vec2_16;  // BasicVec2<Fixed16>
 
 Helpers include `dot`, `length_sq`, `manhattan_length`, component `min`, `max`,
 `clamp`, and `abs`. There is no square root or normalize helper yet.
+
+## AABB Helpers
+
+`BasicAabb<FixedT>` provides deterministic axis-aligned bounds helpers for
+game-space collision and query code:
+
+```cpp
+gfxp::Aabb body = gfxp::Aabb::from_corners(
+    gfxp::Vec2::from_pixels(0, 0),
+    gfxp::Vec2::from_pixels(8, 8));
+
+bool hit = gfxp::aabbs_intersect(body, other);
+gfxp::Vec2 gap = gfxp::min_displacement(body, other);
+```
+
+Available aliases mirror the vector aliases:
+
+```cpp
+gfxp::Aabb;     // BasicAabb<Fixed>
+gfxp::Aabb_8;   // BasicAabb<Fixed8>
+gfxp::Aabb_10;  // BasicAabb<Fixed10>
+gfxp::Aabb_12;  // BasicAabb<Fixed12>
+gfxp::Aabb_16;  // BasicAabb<Fixed16>
+```
+
+Helpers include `translate`, `aabbs_intersect`, `min_displacement`, `size`,
+`center`, and explicit scale casts.
 
 ## Rounding
 
