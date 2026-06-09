@@ -66,7 +66,7 @@ int32_t stable_bits = x.raw_value();
 Vector helpers are intentionally small:
 
 ```cpp
-gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
+gfxp::Vec2 pos = gfxp::Vec2::from_int(10, 20);
 gfxp::Vec2 vel{gfxp::Fixed::from_decimal("0.25").value(), gfxp::Fixed::zero()};
 
 pos += vel;
@@ -75,7 +75,7 @@ pos += vel;
 AABB helpers use the same fixed vector types:
 
 ```cpp
-gfxp::Aabb body = gfxp::Aabb::from_pos_size(pos, gfxp::Vec2::from_pixels(8, 8));
+gfxp::Aabb body = gfxp::Aabb::from_pos_size(pos, gfxp::Vec2::from_int(8, 8));
 bool touching = gfxp::aabbs_intersect(body, other);
 ```
 

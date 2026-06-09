@@ -61,7 +61,7 @@ void test_rounding() {
 }
 
 void test_vec2_integration() {
-    gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
+    gfxp::Vec2 pos = gfxp::Vec2::from_int(10, 20);
     gfxp::Vec2 vel{gfxp::Fixed::from_decimal("0.25").value(),
                    gfxp::Fixed::from_decimal("-0.125").value()};
     const gfxp::Vec2 acc{gfxp::Fixed::from_decimal("0.001").value(),
@@ -91,10 +91,10 @@ void test_fixed_casts_and_pixel_helpers() {
 
     check(down.raw_value() == 384, "fixed12 to fixed8");
     check(up.raw_value() == 98304, "fixed12 to fixed16");
-    check(one_and_half.to_pixels_floor() == 1, "pixels floor");
-    check(one_and_half.to_pixels_ceil() == 2, "pixels ceil");
-    check(one_and_half.to_pixels_round() == 2, "pixels round");
-    check(one_and_half.to_pixels_trunc() == 1, "pixels trunc");
+    check(one_and_half.floor_int() == 1, "floor int");
+    check(one_and_half.ceil_int() == 2, "ceil int");
+    check(one_and_half.round_int() == 2, "round int");
+    check(one_and_half.trunc_int() == 1, "trunc int");
 
     const gfxp::Fixed12 tiny = gfxp::Fixed12::from_raw(7);
     check(gfxp::fixed_cast<gfxp::Fixed8>(tiny, gfxp::Rounding::TowardZero).raw_value() == 0,
@@ -107,7 +107,7 @@ void test_fixed_casts_and_pixel_helpers() {
 }
 
 void test_vec2_helpers() {
-    const gfxp::Vec2 a = gfxp::Vec2::from_pixels(3, -4);
+    const gfxp::Vec2 a = gfxp::Vec2::from_int(3, -4);
     const gfxp::Vec2 b{
         gfxp::Fixed::from_decimal("0.5").value(),
         gfxp::Fixed::from_decimal("2.0").value(),
@@ -119,7 +119,7 @@ void test_vec2_helpers() {
     check(gfxp::length_sq(a).raw_value() == gfxp::Fixed::from_int(25).raw_value(), "vec length sq");
     check(gfxp::manhattan_length(a).raw_value() == gfxp::Fixed::from_int(7).raw_value(),
           "vec manhattan");
-    check(gfxp::abs(a) == gfxp::Vec2::from_pixels(3, 4), "vec abs");
+    check(gfxp::abs(a) == gfxp::Vec2::from_int(3, 4), "vec abs");
 
     const gfxp::Vec2_8 a8 = gfxp::vec2_cast<gfxp::Vec2_8>(a);
     check(a8.x.raw_value() == 768, "vec cast x");
@@ -127,17 +127,17 @@ void test_vec2_helpers() {
 }
 
 void test_aabb_helpers() {
-    const gfxp::Aabb a = gfxp::Aabb::from_corners(gfxp::Vec2::from_pixels(0, 0),
-                                                  gfxp::Vec2::from_pixels(8, 8));
-    const gfxp::Aabb b = gfxp::Aabb::from_pos_size(gfxp::Vec2::from_pixels(7, 4),
-                                                   gfxp::Vec2::from_pixels(4, 4));
-    const gfxp::Aabb c = gfxp::translate(a, gfxp::Vec2::from_pixels(16, 0));
+    const gfxp::Aabb a = gfxp::Aabb::from_corners(gfxp::Vec2::from_int(0, 0),
+                                                  gfxp::Vec2::from_int(8, 8));
+    const gfxp::Aabb b = gfxp::Aabb::from_pos_size(gfxp::Vec2::from_int(7, 4),
+                                                   gfxp::Vec2::from_int(4, 4));
+    const gfxp::Aabb c = gfxp::translate(a, gfxp::Vec2::from_int(16, 0));
 
     check(gfxp::aabbs_intersect(a, b), "aabb intersect");
     check(!gfxp::aabbs_intersect(a, c), "aabb separated");
-    check(a.size() == gfxp::Vec2::from_pixels(8, 8), "aabb size");
-    check(a.center() == gfxp::Vec2::from_pixels(4, 4), "aabb center");
-    check(gfxp::min_displacement(a, c) == gfxp::Vec2::from_pixels(8, 0),
+    check(a.size() == gfxp::Vec2::from_int(8, 8), "aabb size");
+    check(a.center() == gfxp::Vec2::from_int(4, 4), "aabb center");
+    check(gfxp::min_displacement(a, c) == gfxp::Vec2::from_int(8, 0),
           "aabb min displacement");
 
     const gfxp::Aabb_8 packed = gfxp::aabb_cast<gfxp::Aabb_8>(a);

@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main() {
-    gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
+    gfxp::Vec2 pos = gfxp::Vec2::from_int(10, 20);
     gfxp::Vec2 vel{gfxp::Fixed::from_decimal("0.25").value(), gfxp::Fixed::zero()};
 
     pos += vel;

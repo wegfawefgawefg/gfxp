@@ -107,7 +107,7 @@ Checked variants return `std::nullopt` on overflow.
 `BasicVec2<FixedT>` provides small deterministic vector helpers:
 
 ```cpp
-gfxp::Vec2 pos = gfxp::Vec2::from_pixels(10, 20);
+gfxp::Vec2 pos = gfxp::Vec2::from_int(10, 20);
 gfxp::Vec2_8 compact = gfxp::vec2_cast<gfxp::Vec2_8>(pos);
 ```
 
@@ -131,8 +131,8 @@ game-space collision and query code:
 
 ```cpp
 gfxp::Aabb body = gfxp::Aabb::from_corners(
-    gfxp::Vec2::from_pixels(0, 0),
-    gfxp::Vec2::from_pixels(8, 8));
+    gfxp::Vec2::from_int(0, 0),
+    gfxp::Vec2::from_int(8, 8));
 
 bool hit = gfxp::aabbs_intersect(body, other);
 gfxp::Vec2 gap = gfxp::min_displacement(body, other);
